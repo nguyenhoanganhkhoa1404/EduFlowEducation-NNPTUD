@@ -1,6 +1,6 @@
 import COMPONENTS from './components.js';
 
-const API_BASE = '/api/v1';
+const API_BASE = 'http://localhost:3000/api/v1';
 
 const app = {
     state: {
@@ -218,32 +218,26 @@ const app = {
 
     renderEnrollments: async function() {
         const main = document.getElementById('main-content');
-        if (this.state.enrollments.length === 0) {
-            main.innerHTML = `
-                <div style="text-align: center; padding: 8rem 0;">
-                    <div style="background: var(--gray-100); width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
-                         <i class="fas fa-book-open" style="font-size: 3rem; color: var(--gray-400);"></i>
-                    </div>
-                    <h2 style="font-size: 2rem;">No enrollments yet</h2>
-                    <p style="color: var(--gray-500); margin-bottom: 2.5rem; font-size: 1.1rem;">Explore our courses and start learning today.</p>
-                    <button class="btn btn-primary" onclick="app.navigateTo('/')">Explore Courses</button>
-                </div>
-            `;
-            return;
-        }
-
         main.innerHTML = `
-            <h1 style="margin: 4rem 0 2rem;">My Learning Path</h1>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: start;">
-                <div id="enrollment-items-list">
-                    ${COMPONENTS.loader()}
+            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 4rem; padding: 4rem 0;">
+                <div>
+                    <section id="cart-section" style="margin-bottom: 4rem;">
+                        <h2 style="margin-bottom: 2rem;"><i class="fas fa-shopping-cart"></i> New Enrollment</h2>
+                        <div id="enrollment-items-list">${COMPONENTS.loader()}</div>
+                    </section>
+                    
+                    <section id="active-enrollments-section">
+                        <h2 style="margin-bottom: 2rem;"><i class="fas fa-history"></i> My Learning Path</h2>
+                        <div id="active-enrollments-list">${COMPONENTS.loader()}</div>
+                    </section>
                 </div>
-                <div class="enrollment-summary" style="background: white; padding: 2.5rem; border-radius: 24px; box-shadow: var(--shadow-lg); position: sticky; top: 100px;">
-                    <h3 style="margin-bottom: 2rem;">Enrollment Summary</h3>
+                
+                <div class="enrollment-summary" style="background: white; padding: 2.5rem; border-radius: 24px; box-shadow: var(--shadow-lg); position: sticky; top: 100px; height: fit-content;">
+                    <h3 style="margin-bottom: 2rem;">Checkout Summary</h3>
                     <div id="enrollment-summary-details" style="margin: 2rem 0;">
                         <!-- Summary here -->
                     </div>
-                    <button class="btn btn-primary" style="width: 100%; padding: 1.25rem; font-size: 1.1rem;" onclick="app.checkout()">
+                    <button class="btn btn-primary" id="checkout-btn" style="width: 100%; padding: 1.25rem; font-size: 1.1rem;" onclick="app.checkout()">
                         Complete Enrollment
                     </button>
                 </div>
@@ -251,11 +245,20 @@ const app = {
         `;
 
         await this.loadEnrollmentDetails();
+        await this.loadActiveEnrollments();
     },
 
     loadEnrollmentDetails: async function() {
         const list = document.getElementById('enrollment-items-list');
         const summary = document.getElementById('enrollment-summary-details');
+
+        if (this.state.enrollments.length === 0) {
+            if (list) list.innerHTML = '<p style="color: var(--gray-500); padding: 2rem; background: white; border-radius: 16px; border: 2px dashed var(--gray-200);">Your cart is empty. Add courses to start learning!</p>';
+            if (summary) summary.innerHTML = '<p>Nothing to process</p>';
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) checkoutBtn.disabled = true;
+            return;
+        }
 
         try {
             const coursePromises = this.state.enrollments.map(item => fetch(`${API_BASE}/courses/${item.courseId}`).then(r => r.json()));
@@ -269,14 +272,12 @@ const app = {
                 return `
                     <div class="cart-item" style="display: flex; gap: 2rem; background: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; border: 1px solid var(--gray-100);">
                         <img src="${p.images[0].startsWith('http') ? p.images[0] : 'http://localhost:3000' + p.images[0]}" 
-                             style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover;">
+                             style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;">
                         <div style="flex: 1;">
-                            <h4 style="font-size: 1.1rem; margin-bottom: 0.25rem;">${p.courseName}</h4>
+                            <h4 style="font-size: 1rem; margin-bottom: 0.25rem;">${p.courseName}</h4>
                             <p style="color: var(--primary); font-weight: 700;">${p.price.toLocaleString()} VND</p>
-                            <div style="margin-top: 1rem;">
-                                <button onclick="app.removeItem('${p._id}')" style="color: var(--error); font-size: 0.85rem; background: transparent;">Cancel Enrollment</button>
-                            </div>
                         </div>
+                        <button onclick="app.removeItem('${p._id}')" class="btn-icon" style="color: var(--error);"><i class="fas fa-trash"></i></button>
                     </div>
                 `;
             }).join('');
@@ -294,7 +295,62 @@ const app = {
                 </div>
             `;
         } catch (err) {
-            if (list) list.innerHTML = '<p>Error loading enrollments. Please refresh.</p>';
+            if (list) list.innerHTML = '<p>Error loading items.</p>';
+        }
+    },
+
+    loadActiveEnrollments: async function() {
+        const list = document.getElementById('active-enrollments-list');
+        if (!this.state.user) {
+            list.innerHTML = '<p style="color: var(--gray-500);">Please sign in to see your active enrollments.</p>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/enrollments/my`, {
+                headers: { 'Authorization': `Bearer ${this.state.token}` }
+            });
+            const data = await res.json();
+            if (data.success && data.data.length > 0) {
+                list.innerHTML = data.data.map(enrollment => `
+                    <div class="enrollment-card" style="background: white; padding: 2rem; border-radius: 20px; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div>
+                                <span style="font-size: 0.8rem; color: var(--gray-500);">Order #${enrollment._id.slice(-6)}</span>
+                                <h4 style="margin-top: 0.25rem;">${enrollment.items.length} Course(s)</h4>
+                            </div>
+                            <span class="badge ${enrollment.paymentStatus === 'Paid' ? 'badge-paid' : 'badge-unpaid'}">
+                                ${enrollment.paymentStatus}
+                            </span>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            ${enrollment.items.map(item => `
+                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                    <span>${item.course?.courseName || 'Course'}</span>
+                                    <button onclick="app.removeSpecificItem('${enrollment._id}', '${item.course?.courseCode}')" style="background:none; color:var(--error); font-size:0.7rem;">Remove</button>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid var(--gray-100);">
+                            <span style="font-weight: 700; color: var(--primary);">${enrollment.finalAmount.toLocaleString()} VND</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                ${enrollment.paymentStatus === 'Unpaid' ? `
+                                    <button class="btn btn-primary btn-sm" onclick="app.payNow('${enrollment._id}')">Pay Now</button>
+                                    <button class="btn btn-outline btn-sm" style="color:var(--error); border-color:var(--error);" onclick="app.cancelEnrollment('${enrollment._id}')">Cancel</button>
+                                ` : `
+                                    <button class="btn btn-outline btn-sm" disabled>View Course</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p style="color: var(--gray-500);">No active enrollments found.</p>';
+            }
+        } catch (err) {
+            list.innerHTML = '<p>Error loading enrollments.</p>';
         }
     },
 
@@ -303,7 +359,26 @@ const app = {
         localStorage.setItem('enrollments', JSON.stringify(this.state.enrollments));
         this.updateEnrollmentUI();
         this.renderEnrollments();
-        COMPONENTS.notification('Course removed', 'info');
+        COMPONENTS.notification('Removed from cart', 'info');
+    },
+
+    removeSpecificItem: async function(enrollmentId, courseCode) {
+        if (!confirm(`Remove ${courseCode} from this enrollment?`)) return;
+        try {
+            const res = await fetch(`${API_BASE}/enrollments/${enrollmentId}/items/${courseCode}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${this.state.token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                COMPONENTS.notification(data.message, 'success');
+                this.renderEnrollments();
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            COMPONENTS.notification(err.message, 'error');
+        }
     },
 
     renderProfile: function() {
@@ -368,13 +443,77 @@ const app = {
         }
     },
 
-    checkout: function() {
+    checkout: async function() {
         if (!this.state.user) {
             COMPONENTS.notification('Please sign in to complete enrollment', 'error');
             this.navigateTo('/login');
             return;
         }
-        COMPONENTS.notification('Enrolling coming soon!', 'info');
+        
+        if (this.state.enrollments.length === 0) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/enrollments`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.state.token}`
+                },
+                body: JSON.stringify({
+                    items: this.state.enrollments.map(i => ({ course: i.courseId, quantity: 1 })),
+                    paymentMethod: 'BankTransfer'
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.state.enrollments = [];
+                localStorage.setItem('enrollments', '[]');
+                this.updateEnrollmentUI();
+                await this.renderEnrollments();
+                COMPONENTS.notification('Enrollment created successfully!', 'success');
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            COMPONENTS.notification(err.message, 'error');
+        }
+    },
+
+    payNow: async function(id) {
+        try {
+            const res = await fetch(`${API_BASE}/enrollments/${id}/pay`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${this.state.token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                COMPONENTS.notification('Payment successful!', 'success');
+                this.renderEnrollments();
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            COMPONENTS.notification(err.message, 'error');
+        }
+    },
+
+    cancelEnrollment: async function(id) {
+        if (!confirm('Are you sure you want to cancel this enrollment?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/enrollments/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${this.state.token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                COMPONENTS.notification('Enrollment cancelled', 'info');
+                this.renderEnrollments();
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            COMPONENTS.notification(err.message, 'error');
+        }
     }
 };
 
