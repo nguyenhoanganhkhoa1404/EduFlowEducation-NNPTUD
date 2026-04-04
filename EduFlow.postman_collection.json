@@ -1,0 +1,128 @@
+{
+	"info": {
+		"_postman_id": "eduflow-the-final-12-complete",
+		"name": "EduFlow - Final 12 Modules (COMPLETE & AUTOMATED)",
+		"description": "The definitive 12-module collection. User-friendly and automated.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01. Authentication & Users",
+			"item": [
+				{ "name": "[ADMIN] Register Admin", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin_user\",\n  \"email\": \"admin@eduflow.com\",\n  \"password\": \"admin123\",\n  \"roleName\": \"admin\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/auth/register" } },
+				{ "name": "[STUDENT] Register Student", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"username\": \"student_user\",\n  \"email\": \"student@eduflow.com\",\n  \"password\": \"student123\",\n  \"roleName\": \"user\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/auth/register" } },
+				{ "name": "[ANY] Login", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin_user\",\n  \"password\": \"admin123\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/auth/login" } },
+				{ "name": "[ANY] Get My Profile", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/auth/me" } },
+				{ "name": "[ADMIN] Get All Users", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/users" } }
+			]
+		},
+		{
+			"name": "02. Roles",
+			"item": [
+				{ "name": "[ADMIN] Get All Roles", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/roles" } }
+			]
+		},
+		{
+			"name": "03. Subjects",
+			"item": [
+				{
+					"name": "1. Create Subject (Auto-ID)",
+					"event": [
+						{ "listen": "test", "script": { "exec": [ "const res = pm.response.json(); if(res._id) pm.collectionVariables.set('last_subject_id', res._id);" ], "type": "text/javascript" } }
+					],
+					"request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"name\": \"Công nghệ thông tin\",\n  \"slug\": \"it\",\n  \"description\": \"Chuyên ngành CNTT\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/subjects" }
+				},
+				{
+					"name": "2. Get All Subjects",
+					"event": [
+						{ "listen": "test", "script": { "exec": [ "const res = pm.response.json(); if(res.length > 0) pm.collectionVariables.set('last_subject_id', res[0]._id);" ], "type": "text/javascript" } }
+					],
+					"request": { "method": "GET", "url": "http://localhost:3000/api/v1/subjects" }
+				}
+			]
+		},
+		{
+			"name": "04. Courses",
+			"item": [
+				{
+					"name": "1. Create Course (Auto-ID & Code)",
+					"event": [
+						{ "listen": "test", "script": { "exec": [ "const res = pm.response.json(); \nif(res.data && res.data._id) {\n    pm.collectionVariables.set('last_course_id', res.data._id);\n    pm.collectionVariables.set('last_course_code', res.data.courseCode);\n}" ], "type": "text/javascript" } }
+					],
+					"request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"courseCode\": \"C11\",\n  \"courseName\": \"Lập trình Node.js\",\n  \"instructor\": \"Giảng viên A\",\n  \"price\": 500000,\n  \"subject\": \"{{last_subject_id}}\",\n  \"maxStudents\": 50\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/courses" }
+				},
+				{
+					"name": "2. Get All Courses",
+					"event": [
+						{ "listen": "test", "script": { "exec": [ "const res = pm.response.json(); if(res.data && res.data.length > 0) { pm.collectionVariables.set('last_course_id', res.data[0]._id); pm.collectionVariables.set('last_course_code', res.data[0].courseCode); }" ], "type": "text/javascript" } }
+					],
+					"request": { "method": "GET", "url": "http://localhost:3000/api/v1/courses" }
+				}
+			]
+		},
+		{
+			"name": "05. Capacities (Slots)",
+			"item": [
+				{ "name": "[ADMIN] View All Slots", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/capacities" } }
+			]
+		},
+		{
+			"name": "06. Carts",
+			"item": [
+				{ "name": "[STUDENT] Add to Cart (by Code)", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"courseCode\": \"{{last_course_code}}\",\n  \"quantity\": 1\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/carts/add" } },
+				{ "name": "[STUDENT] View My Cart", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/carts" } }
+			]
+		},
+		{
+			"name": "07. Enrollments",
+			"item": [
+				{
+					"name": "[STUDENT] Create Enrollment (by Code)",
+					"event": [
+						{ "listen": "test", "script": { "exec": [ "const res = pm.response.json(); if(res.data && res.data._id) pm.collectionVariables.set('last_enrollment_id', res.data._id);" ], "type": "text/javascript" } }
+					],
+					"request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"items\": [{\"courseCode\": \"{{last_course_code}}\", \"quantity\": 1}], \"additionalNotes\": \"Đăng ký khóa học mới\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/enrollments" }
+				},
+				{ "name": "[ADMIN] View All Enrollments", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/enrollments" } }
+			]
+		},
+		{
+			"name": "08. Enrollment Details",
+			"item": [
+				{ "name": "[STUDENT] Get My Enrollments", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/enrollments/my" } }
+			]
+		},
+		{
+			"name": "09. Coupons",
+			"item": [
+				{ "name": "[ADMIN] Create Coupon", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"code\": \"GIAMGIA10\",\n  \"discountValue\": 10,\n  \"discountType\": \"Percentage\",\n  \"minEnrollmentAmount\": 0,\n  \"isActive\": true\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/coupons" } },
+				{ "name": "Get All Coupons", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/coupons" } }
+			]
+		},
+		{
+			"name": "10. Reviews",
+			"item": [
+				{ "name": "[STUDENT] Write Review (by Code)", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\n  \"courseCode\": \"{{last_course_code}}\",\n  \"rating\": 5,\n  \"comment\": \"Khóa học rất hay!\"\n}", "options": { "raw": { "language": "json" } } }, "url": "http://localhost:3000/api/v1/reviews" } },
+				{ "name": "Get All Reviews", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/reviews" } }
+			]
+		},
+		{
+			"name": "11. Payments",
+			"item": [
+				{ "name": "[ADMIN] Get All Payments", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/payments" } }
+			]
+		},
+		{
+			"name": "12. Notifications",
+			"item": [
+				{ "name": "[ANY] Get My Notifications", "request": { "method": "GET", "url": "http://localhost:3000/api/v1/notifications" } }
+			]
+		}
+	],
+	"variable": [
+		{ "key": "last_subject_id", "value": "" },
+		{ "key": "last_course_id", "value": "" },
+		{ "key": "last_course_code", "value": "" },
+		{ "key": "last_enrollment_id", "value": "" }
+	]
+}

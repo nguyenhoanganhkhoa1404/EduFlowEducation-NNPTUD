@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlow | Vue.js Version</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-light: #ecfdf5;
+            --dark: #064e3b;
+            --light: #f9fafb;
+            --white: #ffffff;
+            --gray: #6b7280;
+            --border: #e5e7eb;
+            --radius: 12px;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--light); color: var(--dark); margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+        
+        header { background: var(--white); border-bottom: 1px solid var(--border); padding: 1.5rem 0; }
+        .nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        
+        .hero { padding: 5rem 0; text-align: center; background: var(--primary-light); }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: var(--dark); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; padding: 4rem 0; }
+        .card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: 0.3s; }
+        .card:hover { transform: translateY(-10px); }
+        .card-img { height: 200px; background: #d1fae5; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--primary); }
+        .card-body { padding: 2rem; }
+        
+        .btn { display: block; width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 1.5rem; transition: 0.2s; }
+        .btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="container nav">
+                <a href="#" class="logo"><i class="fas fa-graduation-cap"></i> EduFlow Vue</a>
+                <div style="font-weight: 600; color: var(--gray)">Basic & Professional</div>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="container">
+                <h1>{{ message }}</h1>
+                <p style="font-size: 1.25rem; color: var(--gray)">Exploring courses built with Vue.js logic.</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <div v-if="loading" style="text-align: center; padding: 4rem;">Loading...</div>
+            <div v-else class="grid">
+                <div v-for="course in courses" :key="course._id" class="card">
+                    <div class="card-img"><i class="fas fa-book"></i></div>
+                    <div class="card-body">
+                        <div style="color: var(--primary); font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">{{ course.subject?.name || 'Education' }}</div>
+                        <h3 style="margin: 0.5rem 0;">{{ course.courseName }}</h3>
+                        <div style="font-size: 1.2rem; font-weight: 800;">{{ formatPrice(course.price) }}</div>
+                        <button class="btn">Enroll Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="background: var(--dark); color: white; padding: 4rem 0; text-align: center;">
+            <p>&copy; 2026 EduFlow Vue.js Demo</p>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue
+        createApp({
+            setup() {
+                const message = ref('Master Your Future')
+                const courses = ref([])
+                const loading = ref(true)
+
+                const fetchCourses = async () => {
+                    try {
+                        const res = await fetch('http://localhost:3000/api/v1/courses')
+                        const data = await res.json()
+                        if (data.success) courses.value = data.data
+                    } finally {
+                        loading.value = false
+                    }
+                }
+
+                const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
+
+                onMounted(fetchCourses)
+
+                return { message, courses, loading, formatPrice }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

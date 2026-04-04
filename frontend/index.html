@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFlow | Online Learning Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="notification-container"></div>
+
+    <header>
+        <div class="container">
+            <a href="/" class="logo" onclick="app.navigateTo('/'); return false;">
+                <i class="fas fa-graduation-cap"></i>
+                <span>EduFlow</span>
+            </a>
+
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="global-search" placeholder="Search for courses, instructors and more...">
+            </div>
+
+            <nav class="nav-actions">
+                <a href="#" class="nav-icon" id="cart-icon" onclick="app.navigateTo('/enrollments'); return false;">
+                    <i class="fas fa-book-open"></i>
+                    <span class="cart-count">0</span>
+                </a>
+                <div id="auth-actions">
+                    <button class="btn btn-primary" id="login-nav-btn" onclick="app.navigateTo('/login')">Login</button>
+                    <div id="user-profile-menu" class="hidden">
+                        <a href="#" class="nav-icon" onclick="app.navigateTo('/profile'); return false;">
+                            <i class="fas fa-user-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <!-- Content will be injected here by main.js -->
+        <div class="loader-container">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <footer style="background: var(--gray-900); color: white; padding: 4rem 0; margin-top: 4rem;">
+        <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem;">
+            <div>
+                <h3 style="margin-bottom: 1.5rem;">EduFlow</h3>
+                <p style="color: var(--gray-400);">Unlock your potential with expert-led online courses.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1.5rem;">Learn</h4>
+                <ul style="list-style: none; color: var(--gray-400);">
+                    <li style="margin-bottom: 0.5rem;"><a href="#">New Courses</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#">Trending</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#">Certifications</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1.5rem;">Support</h4>
+                <ul style="list-style: none; color: var(--gray-400);">
+                    <li style="margin-bottom: 0.5rem;"><a href="#">Shipping</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#">Returns</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

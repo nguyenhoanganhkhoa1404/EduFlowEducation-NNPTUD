@@ -1,0 +1,9 @@
+node_modules/
+.env
+uploads/
+tmp/
+*.xlsx
+package-lock.json
+.vscode/
+.idea/
+*.log
