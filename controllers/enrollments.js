@@ -159,7 +159,12 @@ module.exports = {
       const enrollment = await enrollmentModel.findById(req.params.id);
       if (!enrollment) return res.status(404).json({ success: false, message: 'Enrollment not found' });
       
-      // Check ownership
+      // Check ownership and role
+      const roleName = req.user.role ? req.user.role.name : "";
+      if (roleName.toLowerCase() === 'admin') {
+        return res.status(403).json({ success: false, message: 'Administrator không thể thực hiện thanh toán' });
+      }
+
       if (enrollment.user.toString() !== req.user._id.toString()) {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền thanh toán đơn đăng ký này' });
       }

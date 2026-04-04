@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 let subjectModel = require('../schemas/subjects');
 const { default: slugify } = require('slugify');
+const { CheckLogin, checkRole } = require('../utils/authHandler');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
@@ -31,7 +32,8 @@ router.get('/:id', async function (req, res, next) {
     res.status(404).send({ message: error.message });
   }
 });
-router.post('/', async function (req, res, next) {
+
+router.post('/', CheckLogin, checkRole('admin'), async function (req, res, next) {
   try {
     let newCate = new subjectModel({
       name: req.body.name,
@@ -47,8 +49,9 @@ router.post('/', async function (req, res, next) {
   } catch (error) {
     res.status(400).send({ message: error.message });
   }
-})
-router.put('/:id', async function (req, res, next) {
+});
+
+router.put('/:id', CheckLogin, checkRole('admin'), async function (req, res, next) {
   try {
     let id = req.params.id;
     //c1
@@ -77,7 +80,7 @@ router.put('/:id', async function (req, res, next) {
   }
 });
 
-router.delete('/:id', async function (req, res, next) {
+router.delete('/:id', CheckLogin, checkRole('admin'), async function (req, res, next) {
   try {
     let id = req.params.id;
     //c1
