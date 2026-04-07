@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SubjectManagement from './SubjectManagement';
 import CourseManagement from './CourseManagement';
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ setToastMessage, setShowToast }) => {
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalCourses: 0,
@@ -13,6 +13,17 @@ const AdminDashboard = () => {
     const [enrollments, setEnrollments] = useState([]);
     const [coupons, setCoupons] = useState([]);
     const [activeTab, setActiveTab] = useState('stats'); // stats, courses, subjects, enrollments, coupons
+    const [showCouponModal, setShowCouponModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [couponToDelete, setCouponToDelete] = useState(null);
+    const [newCoupon, setNewCoupon] = useState({
+        code: '',
+        discountType: 'Percentage',
+        discountValue: 0,
+        expiryDate: '',
+        isActive: true,
+        minEnrollmentAmount: 0
+    });
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -54,6 +65,70 @@ const AdminDashboard = () => {
 
         fetchStats();
     }, []);
+
+    const fetchCoupons = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:3000/api/v1/coupons', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setCoupons(data.data || []);
+        } catch (err) {
+            console.error('Failed to fetch coupons:', err);
+        }
+    };
+
+    const handleCreateCoupon = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:3000/api/v1/coupons', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(newCoupon)
+            });
+            const data = await res.json();
+            if (data.success) {
+                setToastMessage('Tạo mã giảm giá thành công!');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+                setShowCouponModal(false);
+                fetchCoupons();
+            } else {
+                setToastMessage(data.message);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
+        } catch (err) {
+            console.error('Create coupon error:', err);
+        }
+    };
+
+    const handleDeleteCoupon = async () => {
+        if (!couponToDelete) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`http://localhost:3000/api/v1/coupons/${couponToDelete}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setToastMessage('Đã xóa mã giảm giá thành công!');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+                setShowDeleteConfirm(false);
+                setCouponToDelete(null);
+                fetchCoupons();
+            }
+        } catch (err) {
+            console.error('Delete coupon error:', err);
+        }
+    };
 
     return (
         <div className="admin-dashboard">
@@ -125,8 +200,8 @@ const AdminDashboard = () => {
                 </>
             )}
 
-            {activeTab === 'courses' && <CourseManagement />}
-            {activeTab === 'subjects' && <SubjectManagement />}
+            {activeTab === 'courses' && <CourseManagement setToastMessage={setToastMessage} setShowToast={setShowToast} />}
+            {activeTab === 'subjects' && <SubjectManagement setToastMessage={setToastMessage} setShowToast={setShowToast} />}
             {activeTab === 'enrollments' && (
                 <div className="enrollments-view">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -192,8 +267,63 @@ const AdminDashboard = () => {
                 <div className="coupons-view">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3>Quản lý mã giảm giá</h3>
-                        <button className="btn" style={{ width: 'auto', marginTop: 0 }}>+ Tạo mã mới</button>
+                        <button className="btn" style={{ width: 'auto', marginTop: 0 }} onClick={() => setShowCouponModal(true)}>+ Tạo mã mới</button>
                     </div>
+
+                    {showCouponModal && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                            <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', maxWidth: '500px', width: '90%' }}>
+                                <h3 style={{ marginBottom: '1.5rem' }}>Tạo mã giảm giá mới</h3>
+                                <form onSubmit={handleCreateCoupon}>
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label>Mã Code:</label>
+                                        <input type="text" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value})} style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }} required />
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                                        <div>
+                                            <label>Loại:</label>
+                                            <select value={newCoupon.discountType} onChange={e => setNewCoupon({...newCoupon, discountType: e.target.value})} style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}>
+                                                <option value="Percentage">Phần trăm (%)</option>
+                                                <option value="Fixed">Số tiền cố định (đ)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label>Giá trị:</label>
+                                            <input type="number" value={newCoupon.discountValue} onChange={e => setNewCoupon({...newCoupon, discountValue: parseInt(e.target.value)})} style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }} required />
+                                        </div>
+                                    </div>
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label>Đơn tối thiểu:</label>
+                                        <input type="number" value={newCoupon.minEnrollmentAmount} onChange={e => setNewCoupon({...newCoupon, minEnrollmentAmount: parseInt(e.target.value)})} style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }} />
+                                    </div>
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label>Ngày hết hạn:</label>
+                                        <input type="date" value={newCoupon.expiryDate} onChange={e => setNewCoupon({...newCoupon, expiryDate: e.target.value})} style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }} required />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowCouponModal(false)} style={{ margin: 0 }}>Hủy</button>
+                                        <button type="submit" className="btn" style={{ margin: 0 }}>Lưu mã</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {showDeleteConfirm && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                            <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', maxWidth: '400px', width: '90%', textAlign: 'center' }}>
+                                <div style={{ color: '#ef4444', fontSize: '3rem', marginBottom: '1rem' }}>
+                                    <i className="fas fa-exclamation-circle"></i>
+                                </div>
+                                <h3 style={{ marginBottom: '1rem' }}>Xác nhận xóa</h3>
+                                <p style={{ color: '#64748b', marginBottom: '2rem' }}>Bạn có chắc chắn muốn xóa mã giảm giá này không? Hành động này không thể hoàn tác.</p>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)} style={{ margin: 0, flex: 1 }}>Hủy bỏ</button>
+                                    <button className="btn" onClick={handleDeleteCoupon} style={{ margin: 0, flex: 1, background: '#ef4444' }}>Xác nhận xóa</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -204,15 +334,16 @@ const AdminDashboard = () => {
                                     <th style={{ padding: '1rem' }}>Giá trị</th>
                                     <th style={{ padding: '1rem' }}>Hết hạn</th>
                                     <th style={{ padding: '1rem' }}>Trạng thái</th>
+                                    <th style={{ padding: '1rem' }}>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {coupons.map(cpn => (
                                     <tr key={cpn._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                         <td style={{ padding: '1rem' }}><span style={{ fontWeight: '700', color: '#4f46e5', background: '#eef2ff', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>{cpn.code}</span></td>
-                                        <td style={{ padding: '1rem' }}>{cpn.discountType}</td>
+                                        <td style={{ padding: '1rem' }}>{cpn.discountType === 'Percentage' ? 'Phần trăm' : 'Cố định'}</td>
                                         <td style={{ padding: '1rem', fontWeight: '600' }}>
-                                            {cpn.discountType === 'Percentage' ? `${cpn.discountValue}%` : `${cpn.discountValue.toLocaleString()} VND`}
+                                            {cpn.discountType === 'Percentage' ? `${cpn.discountValue}%` : `${cpn.discountValue.toLocaleString()}đ`}
                                         </td>
                                         <td style={{ padding: '1rem' }}>{new Date(cpn.expiryDate).toLocaleDateString('vi-VN')}</td>
                                         <td style={{ padding: '1rem' }}>
@@ -225,6 +356,14 @@ const AdminDashboard = () => {
                                             }}>
                                                 {cpn.isActive ? 'Đang hoạt động' : 'Đã khóa'}
                                             </span>
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <button 
+                                                onClick={() => { setCouponToDelete(cpn._id); setShowDeleteConfirm(true); }}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

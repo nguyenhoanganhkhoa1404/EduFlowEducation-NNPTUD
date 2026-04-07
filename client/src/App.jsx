@@ -58,7 +58,9 @@ function App() {
 
   const addToCart = async (courseCode) => {
     if (!user) {
-      alert('Vui lòng đăng nhập để thêm vào giỏ hàng.');
+      setToastMessage('Vui lòng đăng nhập để thêm vào giỏ hàng.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       setView('login');
       return;
     }
@@ -66,13 +68,17 @@ function App() {
     // Duplicate check
     const isAlreadyInCart = cart.some(item => item.course?.courseCode === courseCode);
     if (isAlreadyInCart) {
-      alert('Khóa học này đã có trong giỏ hàng của bạn.');
+      setToastMessage('Khóa học này đã có trong giỏ hàng của bạn.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       return;
     }
 
     const isAlreadyEnrolled = myEnrollments.some(enr => enr.items.some(item => item.course?.courseCode === courseCode));
     if (isAlreadyEnrolled) {
-      alert('Bạn đã đăng ký khóa học này rồi.');
+      setToastMessage('Bạn đã đăng ký khóa học này rồi.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       return;
     }
 
@@ -92,7 +98,9 @@ function App() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
       } else {
-        alert(data.message || 'Không thể thêm vào giỏ hàng');
+        setToastMessage(data.message || 'Không thể thêm vào giỏ hàng');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
       console.error('Add to cart error:', err);
@@ -201,11 +209,15 @@ function App() {
           setView(userData.role?.name?.toLowerCase() === 'admin' ? 'admin' : 'home');
         }
       } else {
-        alert(data.message || 'Login failed');
+        setToastMessage(data.message || 'Lỗi khi đăng nhập');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
       console.error('Login error:', err);
-      alert('An error occurred during login');
+      setToastMessage('An error occurred during login');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     }
   };
 
@@ -227,10 +239,14 @@ function App() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Đã hủy đơn đăng ký thành công');
+        setToastMessage('Đã hủy đơn đăng ký thành công');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
         fetchMyEnrollments();
       } else {
-        alert(data.message);
+        setToastMessage(data.message || 'Lỗi khi xóa đơn hàng');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
       console.error('Delete error:', err);
@@ -239,7 +255,9 @@ function App() {
 
   const handlePay = async (enrollmentId) => {
     if (user?.role?.name?.toLowerCase() === 'admin') {
-      alert('Administrator không thể thực hiện thanh toán');
+      setToastMessage('Administrator không thể thực hiện thanh toán');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       return;
     }
 
@@ -252,10 +270,14 @@ function App() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Thanh toán thành công!');
+        setToastMessage('Thanh toán thành công!');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
         fetchMyEnrollments();
       } else {
-        alert(data.message);
+        setToastMessage(data.message || 'Lỗi khi thanh toán');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
       console.error('Payment error:', err);
@@ -278,6 +300,9 @@ function App() {
         } else {
           setAppliedCoupon(data.data);
           setCouponCode(code); // Ensure input shows the code
+          setToastMessage(`Đã áp dụng mã ${code} thành công!`);
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
         }
       } else {
         setCouponError(data.message);
@@ -488,13 +513,17 @@ function App() {
 
   const handleEnroll = async (course) => {
     if (!user) {
-      alert('Vui lòng đăng nhập để đăng ký khóa học.');
+      setToastMessage('Vui lòng đăng nhập để đăng ký khóa học.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       setView('login');
       return;
     }
 
     if (user.role?.name?.toLowerCase() === 'admin') {
-      alert('Administrator không thể đăng ký khóa học.');
+      setToastMessage('Administrator không thể đăng ký khóa học.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
       return;
     }
 
@@ -529,11 +558,15 @@ function App() {
           setCart([]);
         }
       } else {
-        alert(data.message || 'Đăng ký thất bại');
+        setToastMessage(data.message || 'Lỗi khi thanh toán');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
       console.error('Enrollment error:', err);
-      alert('Có lỗi xảy ra khi đăng ký');
+      setToastMessage('Có lỗi xảy ra khi đăng ký');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     }
   };
 
@@ -882,7 +915,10 @@ function App() {
         )}
         {view === 'admin' && (
           <div className="container">
-            <AdminDashboard />
+            <AdminDashboard 
+              setToastMessage={setToastMessage} 
+              setShowToast={setShowToast} 
+            />
           </div>
         )}
       </main>

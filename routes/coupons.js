@@ -50,4 +50,13 @@ router.post('/', CheckLogin, checkRole('admin'), async (req, res) => {
   }
 });
 
+router.delete('/:id', CheckLogin, checkRole('admin'), async (req, res) => {
+  try {
+    await couponModel.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: 'Đã xóa mã giảm giá thành công' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

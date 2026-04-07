@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-const SubjectManagement = () => {
+const SubjectManagement = ({ setToastMessage, setShowToast }) => {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [subjectToDelete, setSubjectToDelete] = useState(null);
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingSubject, setEditingSubject] = useState(null);
@@ -42,33 +44,43 @@ const SubjectManagement = () => {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                setMessage(editingSubject ? 'Updated successfully' : 'Created successfully');
+                setToastMessage(editingSubject ? 'Cập nhật chuyên ngành thành công' : 'Thêm chuyên ngành thành công');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
                 setFormData({ name: '' });
                 setEditingSubject(null);
                 fetchSubjects();
             } else {
-                setMessage(data.message || 'Error occurred');
+                setToastMessage(data.message || 'Lỗi xảy ra');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
             }
         } catch (err) {
             setMessage('Failed to save subject');
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this subject?')) return;
+    const handleDelete = async () => {
+        if (!subjectToDelete) return;
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://localhost:3000/api/v1/subjects/${id}`, {
+            const res = await fetch(`http://localhost:3000/api/v1/subjects/${subjectToDelete}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                setMessage('Deleted successfully');
+                setToastMessage('Đã xóa chuyên ngành thành công');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+                setShowDeleteConfirm(false);
+                setSubjectToDelete(null);
                 fetchSubjects();
             }
         } catch (err) {
-            setMessage('Failed to delete subject');
+            setToastMessage('Failed to delete subject');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
         }
     };
 
@@ -108,7 +120,23 @@ const SubjectManagement = () => {
                 {loading ? (
                     <p>Loading subjects...</p>
                 ) : (
-                    <table className="mgmt-table">
+                    <>
+                        {showDeleteConfirm && (
+                            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                                <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', maxWidth: '400px', width: '90%', textAlign: 'center' }}>
+                                    <div style={{ color: '#ef4444', fontSize: '3rem', marginBottom: '1rem' }}>
+                                        <i className="fas fa-exclamation-circle"></i>
+                                    </div>
+                                    <h3 style={{ marginBottom: '1rem' }}>Xác nhận xóa</h3>
+                                    <p style={{ color: '#64748b', marginBottom: '2rem' }}>Bạn có chắc chắn muốn xóa chuyên ngành này không? Hành động này không thể hoàn tác.</p>
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)} style={{ margin: 0, flex: 1 }}>Hủy bỏ</button>
+                                        <button className="btn" onClick={handleDelete} style={{ margin: 0, flex: 1, background: '#ef4444', color: 'white' }}>Xác nhận xóa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <table className="mgmt-table">
                         <thead>
                             <tr>
                                 <th>Tên Chuyên ngành</th>
@@ -127,7 +155,7 @@ const SubjectManagement = () => {
                                                 setEditingSubject(subject);
                                                 setFormData({ name: subject.name });
                                             }}><i className="fas fa-edit"></i></button>
-                                            <button className="btn-icon btn-delete" title="Xóa" onClick={() => handleDelete(subject._id)}>
+                                            <button className="btn-icon btn-delete" title="Xóa" onClick={() => { setSubjectToDelete(subject._id); setShowDeleteConfirm(true); }}>
                                                 <i className="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -136,6 +164,7 @@ const SubjectManagement = () => {
                             ))}
                         </tbody>
                     </table>
+                    </>
                 )}
             </div>
 
