@@ -9,7 +9,7 @@ let { CheckLogin, checkRole } = require('../utils/authHandler')
 
 router.get("/", CheckLogin, checkRole("ADMIN","MODERATOR"), async function (req, res, next) {//ADMIN
   let users = await userController.GetAllUser()
-  res.send(users);
+  res.status(200).json({ success: true, count: users.length, data: users });
 });
 
 router.get("/:id", async function (req, res, next) {
@@ -17,9 +17,9 @@ router.get("/:id", async function (req, res, next) {
     req.params.id
   )
   if (result) {
-    res.send(result);
+    res.status(200).json({ success: true, data: result });
   } else {
-    res.status(404).send({ message: "id not found" })
+    res.status(404).json({ success: false, message: "id not found" })
   }
 });
 
@@ -30,9 +30,9 @@ router.post("/", CreateAnUserValidator, validatedResult, async function (req, re
       req.body.username, req.body.password,
       req.body.email, req.body.role
     )
-    res.send(user);
+    res.status(201).json({ success: true, data: user });
   } catch (err) {
-    res.status(400).send({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -46,9 +46,9 @@ router.put("/:id", ModifyAnUserValidator, validatedResult, async function (req, 
 
     let populated = await userModel
       .findById(updatedItem._id)
-    res.send(populated);
+    res.status(200).json({ success: true, data: populated });
   } catch (err) {
-    res.status(400).send({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -61,11 +61,11 @@ router.delete("/:id", async function (req, res, next) {
       { new: true }
     );
     if (!updatedItem) {
-      return res.status(404).send({ message: "id not found" });
+      return res.status(404).json({ success: false, message: "id not found" });
     }
-    res.send(updatedItem);
+    res.status(200).json({ success: true, data: updatedItem, message: "User deleted successfully" });
   } catch (err) {
-    res.status(400).send({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 

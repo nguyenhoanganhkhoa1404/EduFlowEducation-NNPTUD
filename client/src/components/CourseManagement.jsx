@@ -29,7 +29,7 @@ const CourseManagement = () => {
             const coursesData = await cRes.json();
             const subjectsData = await sRes.json();
             setCourses(coursesData.data || []);
-            setSubjects(subjectsData || []);
+            setSubjects(subjectsData.data || []);
         } catch (err) {
             console.error('Failed to fetch data:', err);
         } finally {
@@ -180,25 +180,27 @@ const CourseManagement = () => {
                             <tbody>
                                 {courses.filter(c => !c.isDeleted).map(course => (
                                     <tr key={course._id}>
-                                        <td>{course.courseCode}</td>
+                                        <td><span className="course-code-badge">{course.courseCode}</span></td>
                                         <td>{course.courseName}</td>
-                                        <td>{course.price.toLocaleString()} VND</td>
+                                        <td><span className="price-tag">{course.price.toLocaleString()} VND</span></td>
                                         <td>
-                                            <button className="btn-icon" onClick={() => {
-                                                setEditingCourse(course);
-                                                setFormData({
-                                                    courseCode: course.courseCode,
-                                                    courseName: course.courseName,
-                                                    slug: course.slug,
-                                                    price: course.price,
-                                                    description: course.description,
-                                                    instructor: course.instructor,
-                                                    subject: course.subject?._id || course.subject
-                                                });
-                                            }}><i className="fas fa-edit"></i></button>
-                                            <button className="btn-icon btn-delete" onClick={() => handleDelete(course._id)}>
-                                                <i className="fas fa-trash"></i>
-                                            </button>
+                                            <div className="actions-cell">
+                                                <button className="btn-icon" title="Sửa" onClick={() => {
+                                                    setEditingCourse(course);
+                                                    setFormData({
+                                                        courseCode: course.courseCode,
+                                                        courseName: course.courseName,
+                                                        slug: course.slug,
+                                                        price: course.price,
+                                                        description: course.description,
+                                                        instructor: course.instructor,
+                                                        subject: course.subject?._id || course.subject
+                                                    });
+                                                }}><i className="fas fa-edit"></i></button>
+                                                <button className="btn-icon btn-delete" title="Xóa" onClick={() => handleDelete(course._id)}>
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -209,13 +211,135 @@ const CourseManagement = () => {
             </div>
 
             <style dangerouslySetInnerHTML={{ __html: `
-                .mgmt-grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-                .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-                .form-group label { font-size: 0.875rem; font-weight: 600; color: #475569; }
-                .form-group input, .form-group select, .form-group textarea { padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; font-family: inherit; }
+                .management-container {
+                    background: white;
+                    padding: 2.5rem;
+                    border-radius: 24px;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #f1f5f9;
+                }
+                .mgmt-header h3 {
+                    font-size: 1.75rem;
+                    color: #0f172a;
+                    margin-bottom: 0.5rem;
+                    font-weight: 700;
+                }
+                .mgmt-header p {
+                    color: #64748b;
+                    font-size: 1rem;
+                    margin-bottom: 2rem;
+                }
+                .course-form-card {
+                    background: #f8fafc;
+                    padding: 2.5rem;
+                    border-radius: 20px;
+                    border: 1px solid #e2e8f0;
+                    margin-bottom: 3rem;
+                }
+                .mgmt-grid-form {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1.5rem;
+                    margin-top: 1.5rem;
+                }
+                .form-group { display: flex; flex-direction: column; gap: 0.625rem; }
+                .form-group label { font-size: 0.875rem; font-weight: 600; color: #334155; }
+                .form-group input, .form-group select, .form-group textarea {
+                    padding: 0.875rem;
+                    border-radius: 12px;
+                    border: 1px solid #cbd5e1;
+                    font-family: inherit;
+                    font-size: 0.95rem;
+                    transition: all 0.2s;
+                    background: white;
+                }
+                .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                }
                 .full-width { grid-column: span 2; }
-                .course-form-card { background: #f8fafc; padding: 2rem; border-radius: 12px; }
-                .table-responsive { overflow-x: auto; }
+                .form-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+                .btn {
+                    padding: 0.875rem 1.75rem;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    border: none;
+                }
+                .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+                .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+                .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+                .btn-secondary:hover { background: #e2e8f0; color: #1e293b; }
+                
+                .table-responsive {
+                    background: white;
+                    border-radius: 16px;
+                    border: 1px solid #f1f5f9;
+                    overflow: hidden;
+                }
+                .mgmt-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+                .mgmt-table th {
+                    background: #f8fafc;
+                    padding: 1.25rem 1.5rem;
+                    text-align: left;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: #475569;
+                    border-bottom: 1px solid #f1f5f9;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+                .mgmt-table td {
+                    padding: 1.25rem 1.5rem;
+                    color: #1e293b;
+                    border-bottom: 1px solid #f1f5f9;
+                    font-size: 1rem;
+                    vertical-align: middle;
+                }
+                .mgmt-table tr:last-child td { border-bottom: none; }
+                .mgmt-table tr:hover { background-color: #f8fafc; }
+                
+                .course-code-badge {
+                    background: #eff6ff;
+                    color: #2563eb;
+                    padding: 0.375rem 0.75rem;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    font-family: monospace;
+                }
+                .price-tag { font-weight: 700; color: #0f172a; }
+                
+                .actions-cell { display: flex; gap: 0.5rem; }
+                .btn-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid #e2e8f0;
+                    background: white;
+                    color: #64748b;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-icon:hover { background: #eff6ff; color: #3b82f6; border-color: #3b82f6; }
+                .btn-icon.btn-delete:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+                
+                .status-msg {
+                    margin-top: 1.5rem;
+                    padding: 1rem;
+                    border-radius: 12px;
+                    background: #f0fdf4;
+                    color: #166534;
+                    font-weight: 500;
+                    border: 1px solid #bbf7d0;
+                    text-align: center;
+                }
             `}} />
         </div>
     );

@@ -58,8 +58,8 @@ module.exports = {
 
   updateCourse: async (req, res) => {
     try {
-      const { courseName, price, description, subject, instructor } = req.body;
-      const updateData = { courseName, price, description, subject, instructor };
+      const { courseCode, courseName, price, description, subject, instructor } = req.body;
+      const updateData = { courseCode, courseName, price, description, subject, instructor };
       
       if (courseName) updateData.slug = slugify(courseName, { lower: true });
       if (req.files && req.files.length > 0) {

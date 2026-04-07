@@ -10,9 +10,9 @@ router.get('/', async function (req, res, next) {
     let result = await subjectModel.find({
       isDeleted: false
     })
-    res.send(result);
+    res.status(200).json({ success: true, count: result.length, data: result });
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -24,12 +24,12 @@ router.get('/:id', async function (req, res, next) {
       _id: id
     })
     if (result) {
-      res.send(result);
+      res.status(200).json({ success: true, data: result });
     } else {
-      res.status(404).send({ message: "ID NOT FOUND" });
+      res.status(404).json({ success: false, message: "ID NOT FOUND" });
     }
   } catch (error) {
-    res.status(404).send({ message: error.message });
+    res.status(404).json({ success: false, message: error.message });
   }
 });
 
@@ -45,9 +45,9 @@ router.post('/', CheckLogin, checkRole('admin'), async function (req, res, next)
       })
     });
     await newCate.save();
-    res.send(newCate)
+    res.status(201).json({ success: true, data: newCate });
   } catch (error) {
-    res.status(400).send({ message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 
@@ -74,9 +74,10 @@ router.put('/:id', CheckLogin, checkRole('admin'), async function (req, res, nex
     let updatedItem = await subjectModel.findByIdAndUpdate(id, req.body, {
       new: true
     });
-    res.send(updatedItem)
+    if (!updatedItem) return res.status(404).json({ success: false, message: "ID NOT FOUND" });
+    res.status(200).json({ success: true, data: updatedItem });
   } catch (error) {
-    res.status(404).send({ message: error.message });
+    res.status(404).json({ success: false, message: error.message });
   }
 });
 
@@ -105,9 +106,10 @@ router.delete('/:id', CheckLogin, checkRole('admin'), async function (req, res, 
     }, {
       new: true
     });
-    res.send(updatedItem)
+    if (!updatedItem) return res.status(404).json({ success: false, message: "ID NOT FOUND" });
+    res.status(200).json({ success: true, message: "Subject deleted successfully" });
   } catch (error) {
-    res.status(404).send({ message: error.message });
+    res.status(404).json({ success: false, message: error.message });
   }
 });
 
