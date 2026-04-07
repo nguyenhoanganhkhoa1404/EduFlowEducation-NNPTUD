@@ -8,6 +8,25 @@ router.get('/', async (req, res) => {
   res.status(200).json({ success: true, data: coupons });
 });
 
+router.get('/validate/:code', CheckLogin, async (req, res) => {
+  try {
+    const code = req.params.code.trim();
+    const coupon = await couponModel.findOne({ 
+      code: { $regex: new RegExp("^" + code + "$", "i") }, 
+      isActive: true, 
+      expiryDate: { $gt: new Date() } 
+    });
+    
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: 'Mã giảm giá không tồn tại hoặc đã hết hạn' });
+    }
+    
+    res.status(200).json({ success: true, data: coupon });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.post('/', CheckLogin, checkRole('admin'), async (req, res) => {
   try {
     const { code, discountType, discountValue, expiryDate, isActive, minEnrollmentAmount } = req.body;

@@ -47,7 +47,12 @@ module.exports = {
       let discount = 0;
       let couponDoc = null;
       if (couponCode) {
-        couponDoc = await couponModel.findOne({ code: couponCode, isActive: true, expiryDate: { $gt: new Date() } }).session(session);
+        const code = couponCode.trim();
+        couponDoc = await couponModel.findOne({ 
+          code: { $regex: new RegExp("^" + code + "$", "i") }, 
+          isActive: true, 
+          expiryDate: { $gt: new Date() } 
+        }).session(session);
         if (couponDoc) {
           if (totalAmount >= couponDoc.minEnrollmentAmount) {
             if (couponDoc.discountType === 'Percentage') {
